@@ -18,7 +18,7 @@ class Main extends JFrame {
         super(s);
     }
     private static File openedFile;
-    private static String homeDirectory = "/home/ippotim/Downloads/";
+    private static String homeDirectory;
 
     public static void main(String[] args) {
         Main drawRect = new Main("LimGo");
@@ -28,15 +28,16 @@ class Main extends JFrame {
             e.printStackTrace();
         }
 
+        homeDirectory = System.getProperty("user.dir") + "/";
+
         // macOS下菜单栏放到全局菜单栏
         if (System.getProperty("os.name").contains("Mac")) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
-            homeDirectory = System.getProperty("user.dir") + "/";
         }
 
-        if (System.getProperty("os.name").contains("Win")) {
-            homeDirectory = System.getProperty("user.dir") + "/";
-        }
+//        if (System.getProperty("os.name").contains("Win")) {
+//            homeDirectory = System.getProperty("user.dir") + "/";
+//        }
 
 //        Container cont = drawRect.getContentPane();
         DrawTable drawTable = new DrawTable();
