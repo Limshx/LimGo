@@ -1,3 +1,4 @@
+![LimGo Logo](limgo.png)
 ## LimGo是什么？
 * LimGo是一组精巧的围棋程序，有安卓版和桌面版。
 ## What is LimGo?
