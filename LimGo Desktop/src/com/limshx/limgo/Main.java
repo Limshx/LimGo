@@ -57,6 +57,7 @@ class Main extends JFrame {
             File file = jFileChooser.getSelectedFile();
             if (null != file) {
                 openedFile = file;
+                homeDirectory = openedFile.getParent() + "/";
                 JOptionPane.showMessageDialog(null, "Imported \"" + openedFile.getName() + "\"");
                 drawTable.adapter.getPlacedStonesFromFile(openedFile);
                 drawTable.doRepaint();
@@ -95,7 +96,14 @@ class Main extends JFrame {
                 return;
             }
             int importedStonesNum = drawTable.adapter.getImportedStonesNum();
-            drawTable.adapter.jumpToStone(Integer.parseInt(JOptionPane.showInputDialog("0 ~ " + importedStonesNum + " :")));
+            try {
+
+                int index = Integer.parseInt(JOptionPane.showInputDialog("0 ~ " + importedStonesNum + " :"));
+                drawTable.adapter.jumpToStone(index);
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Not an integer!");
+//                e.printStackTrace();
+            }
         });
         jMenuItems[1].addActionListener(actionEvent -> new Thread(() -> drawTable.adapter.randomPlay()).start());
         jMenuItems[2].addActionListener(actionEvent -> drawTable.adapter.score());

@@ -1,7 +1,7 @@
 package com.limshx.limgo;
 
 import Kernel.Adapter;
-import Kernel.GraphicsOperation;
+import Kernel.GraphicsOperations;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -12,7 +12,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
-public class DrawTable extends View implements GraphicsOperation {
+public class DrawTable extends View implements GraphicsOperations {
     private Context context;
     private Paint paint = new Paint();
     private Canvas canvas;

@@ -1,15 +1,19 @@
 package com.limshx.limgo;
 
 import Kernel.Adapter;
-import Kernel.GraphicsOperation;
+import Kernel.GraphicsOperations;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import java.awt.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
-public class DrawTable extends JPanel implements GraphicsOperation {
+public class DrawTable extends JPanel implements GraphicsOperations {
     int windowSize = 600;
     Adapter adapter;
     private Graphics g;

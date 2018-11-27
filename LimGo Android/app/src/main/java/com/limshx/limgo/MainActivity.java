@@ -81,13 +81,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        switch (requestCode) {
-            case 0: {                                          //这个0是requestCode，上面requestPermissions有用到
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (initDirectoryFailed()) {
-                        Toast.makeText(this, "Create path failed!", Toast.LENGTH_SHORT).show();
-                    }
+        //这个0是requestCode，上面requestPermissions有用到
+        // If request is cancelled, the result arrays are empty.
+        if (requestCode == 0) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                if (initDirectoryFailed()) {
+                    Toast.makeText(this, "Create path failed!", Toast.LENGTH_SHORT).show();
                 }
             }
         }
@@ -122,26 +121,24 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 items[i] = files[i].getName();
             }
             selectedItem = 0;
-            InfoBox infoBox = new InfoBox(null, "OK", "Cancel", null, context) {
+            InfoBox infoBox = new InfoBox(null, "Cancel", "OK", null, context) {
+                @Override
+                void onNegative() {
+
+                }
                 @Override
                 void onPositive() {
                     openedFile = new File(homeDirectory + items[selectedItem]);
-                    new InfoBox(  "Import \"" + openedFile.getName() + "\" ?", "OK", "Cancel", null, context) {
-                        @Override
-                        void onPositive() {
-                            operateFile();
-                        }
-
+                    new InfoBox(  "Import \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null, context) {
                         @Override
                         void onNegative() {
 
                         }
+                        @Override
+                        void onPositive() {
+                            operateFile();
+                        }
                     }.showDialog();
-                }
-
-                @Override
-                void onNegative() {
-
                 }
             };
             infoBox.getAdb().setSingleChoiceItems(items, selectedItem, new DialogInterface.OnClickListener() {
@@ -201,22 +198,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }.selectFile();
                 break;
             case R.id.Export:
-                InfoBox infoBox = new InfoBox("Input a file name :", "OK", "Cancel", new EditText(context), context) {
+                InfoBox infoBox = new InfoBox("Input a file name :", "Cancel", "OK", new EditText(context), context) {
+                    @Override
+                    void onNegative() {
+
+                    }
                     @Override
                     void onPositive() {
                         String fileName = ((EditText) getView()).getText().toString();
                         if (!fileName.equals("")) {
                             openedFile = new File(homeDirectory + fileName);
                             if (openedFile.exists()) {
-                                new InfoBox("File \"" + openedFile.getName() + "\" exists, overwrite it?", "OK", "Cancel", null, context) {
-                                    @Override
-                                    void onPositive() {
-                                        exportToFile();
-                                    }
-
+                                new InfoBox("File \"" + openedFile.getName() + "\" exists, overwrite it?", "Cancel", "OK", null, context) {
                                     @Override
                                     void onNegative() {
 
+                                    }
+                                    @Override
+                                    void onPositive() {
+                                        exportToFile();
                                     }
                                 }.showDialog();
                             } else {
@@ -226,11 +226,6 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                             Toast.makeText(context, "The name of file can not be empty!", Toast.LENGTH_SHORT).show();
                         }
                     }
-
-                    @Override
-                    void onNegative() {
-
-                    }
                 };
                 infoBox.showDialog();
                 if (openedFile != null) {
@@ -238,30 +233,28 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }
                 break;
             case R.id.Clear:
-                new InfoBox("Close current project without saving?", "OK", "Cancel", null, context) {
-                    @Override
-                    void onPositive() {
-                        clear();
-                    }
-
+                new InfoBox("Close current project without saving?", "Cancel", "OK", null, context) {
                     @Override
                     void onNegative() {
 
+                    }
+                    @Override
+                    void onPositive() {
+                        clear();
                     }
                 }.showDialog();
                 break;
             case R.id.Delete:
                 if (null != openedFile) {
-                    new InfoBox("Delete \"" + openedFile.getName() + "\" ?", "OK", "Cancel", null, context) {
+                    new InfoBox("Delete \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null, context) {
+                        @Override
+                        void onNegative() {
+
+                        }
                         @Override
                         void onPositive() {
                             deleteFile();
                             clear();
-                        }
-
-                        @Override
-                        void onNegative() {
-
                         }
                     }.showDialog();
                 } else {
@@ -278,7 +271,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
-        MenuItem menuItem[] = new MenuItem[4];
+        MenuItem[] menuItem = new MenuItem[4];
 
 //        menuItem[0] = menu.add(0, 0, 0, "Analyze");
 //        menuItem[0].setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
@@ -299,21 +292,21 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                     return false;
                 }
 
-                new InfoBox("0~" + drawTable.adapter.getImportedStonesNum() + " :", "OK", "Cancel", new EditText(context), context) {
-                    @Override
-                    void onPositive() {
-                        try {
-                            drawTable.adapter.jumpToStone(Integer.parseInt(((EditText) getView()).getText().toString()));
-                        } catch (NumberFormatException e) {
-                            Toast.makeText(context, "Please input an integer.", Toast.LENGTH_SHORT).show();
-                        }
-                    }
-
+                new InfoBox("0~" + drawTable.adapter.getImportedStonesNum() + " :", "Cancel", "OK", new EditText(context), context) {
                     @Override
                     void onNegative() {
 
                     }
-                }.showDialog();
+                    @Override
+                    void onPositive() {
+                        try {
+                            drawTable.adapter.jumpToStone(Integer.parseInt(((EditText) getView()).getText().toString()));
+                            getAlertDialog().cancel();
+                        } catch (NumberFormatException e) {
+                            Toast.makeText(context, "Please input an integer.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                }.showDialog(false);
                 return true;
             }
         });

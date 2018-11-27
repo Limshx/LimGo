@@ -8,10 +8,10 @@ import java.util.LinkedList;
 import java.util.Random;
 
 public class Adapter {
-    private GraphicsOperation drawTable;
+    private GraphicsOperations drawTable;
 
-    public Adapter(GraphicsOperation graphicsOperation, int v) {
-        drawTable = graphicsOperation;
+    public Adapter(GraphicsOperations graphicsOperations, int v) {
+        drawTable = graphicsOperations;
         border = v;
         init(true);
     }

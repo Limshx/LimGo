@@ -1,6 +1,6 @@
 package Kernel;
 
-public interface GraphicsOperation {
+public interface GraphicsOperations {
     void drawLine(int x1, int y1, int x2, int y2, int width);
 
     void fillRect(int x, int y, int width, int height, int color);
