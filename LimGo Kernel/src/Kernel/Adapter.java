@@ -266,7 +266,7 @@ public class Adapter {
         if (needToRecoverBoard) {
             copyBoard(boardForKo[1], stones);
         } else {
-            placedStones.add(genLocation(this.x, this.y));
+            placedStones.add(genLocation(x, y));
 //            updateScore(x, y, color);
             drawTable.doRepaint();
 //            invalidate();
