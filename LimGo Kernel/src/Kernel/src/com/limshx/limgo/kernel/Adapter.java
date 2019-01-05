@@ -1,4 +1,4 @@
-package Kernel;
+package com.limshx.limgo.kernel;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -19,7 +19,7 @@ public class Adapter {
     private int border;
     private int x, y;
     private int color;
-//    public boolean showScore;
+    private final int boardSize = 19;
 
     class Point {
         int x, y;
@@ -44,8 +44,8 @@ public class Adapter {
         x = -1;
         y = -1;
         color = Color.BLACK;
-        stones = new Stone[19][19];
-        boardForKo = new Stone[2][19][19];
+        stones = new Stone[boardSize][boardSize];
+        boardForKo = new Stone[2][boardSize][boardSize];
         if (importStones) {
             importedStones = new LinkedList<>();
         }
@@ -73,10 +73,8 @@ public class Adapter {
         }
     }
 
-//    private int[][] score = new int[19][19];
-
     private Stone[][] stones; // 判断stones[i][j]是否为空即可，不需要单独定义一个boolean[][] hasStone
-    private Stone[][][] boardForKo; // 用于判断提劫禁手的历史局面Stone[0][19][19]为上一个局面，Stone[1][19][19]为当前局面
+    private Stone[][][] boardForKo; // 用于判断提劫禁手的历史局面Stone[0][boardSize][boardSize]为上一个局面，Stone[1][boardSize][boardSize]为当前局面
     // 实现棋局导入导出功能，直觉或者说第一感就是用一个集合保存每一步棋，这里使用类似“AA”之双坐标字母表示落子位置，先求实现功能，至于怎样优雅优化、变量名方法名怎么起、方法放哪里云云是后面的事。
     private LinkedList<String> importedStones;
     private LinkedList<String> placedStones;
@@ -131,26 +129,6 @@ public class Adapter {
         return location;
     }
 
-//    private int abs(int a) {
-//        if (a < 0) return -a;
-//        return a;
-//    }
-
-//    private void updateScore(int x, int y, int color) {
-//        int base = 1;
-//        if (1 == color) base = -1;
-//        for (int i = 0; i < 19; i++) {
-//            for (int j = 0; j < 19; j++) {
-//                score[i][j] += base * (19 * 2 - abs(x - i) - abs(y - j));
-//            }
-//        }
-//    }
-
-//    private void drawScore(int x, int y) {
-//        drawTable.drawString(String.valueOf(score[x][y]), (float) (x + 0.5) * border, (float) (y + 1.25) * border);
-//    }
-
-
     private boolean[][] visited;
     private LinkedList<Stone> visitedStones = new LinkedList<>();
     private boolean isAlive;
@@ -173,7 +151,7 @@ public class Adapter {
     }
 
     private void findDeadEnemies(int x, int y, int color, boolean doRemove) {
-        visited = new boolean[19][19];
+        visited = new boolean[boardSize][boardSize];
 //        visitedStones = new LinkedList<>(); // clear()似乎更好
         visitedStones.clear();
         isAlive = false;
@@ -182,13 +160,13 @@ public class Adapter {
             if (doRemove && !isAlive) {
 //                while (!visitedStones.isEmpty()) {
 //                    Stone stone = visitedStones.remove();
-                // 这是用空间复杂度换时间复杂度，不用遍历19x19的visited数组，直接从visitedStones链表中获取，虽然似乎不够优雅。至于说这两者合并，比如将visitedStones定义为哈希表，key为x+" "+y之字符串，对应的value存在说明visited[x][y]为true，但这个判断比直接判断visited[x][y]效率上就差多了，这相当于或者说就是时间复杂度换空间复杂度了之又换回去了。暂时没有很好的方案，故暂搁置。
+                // 这是用空间复杂度换时间复杂度，不用遍历visited数组，直接从visitedStones链表中获取，虽然似乎不够优雅。至于说这两者合并，比如将visitedStones定义为哈希表，key为x+" "+y之字符串，对应的value存在说明visited[x][y]为true，但这个判断比直接判断visited[x][y]效率上就差多了，这相当于或者说就是时间复杂度换空间复杂度了之又换回去了。暂时没有很好的方案，故暂搁置。
                 for (Stone stone : visitedStones) {
                     // stone = null; // 这样是不行的
                     stones[stone.point.x][stone.point.y] = null;
                 }
-//                for (int i = 0; i < 19; i++) {
-//                    for (int j = 0; j < 19; j++) {
+//                for (int i = 0; i < boardSize; i++) {
+//                    for (int j = 0; j < boardSize; j++) {
 //                        if (visited[i][j]) {
 //                            stones[i][j] = null;
 //                        }
@@ -207,8 +185,8 @@ public class Adapter {
     }
 
     private void copyBoard(Stone[][] from, Stone[][] to) {
-        for (int i = 0; i < 19; i++) {
-            System.arraycopy(from[i], 0, to[i], 0, 19);
+        for (int i = 0; i < boardSize; i++) {
+            System.arraycopy(from[i], 0, to[i], 0, boardSize);
         }
     }
 
@@ -221,8 +199,8 @@ public class Adapter {
     }
 
     private boolean isTheSameBoard(Stone[][] a, Stone[][] b) {
-        for (int i = 0; i < 19; i++) {
-            for (int j = 0; j < 19; j++) {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 if (getStoneStatus(a[i][j]) != getStoneStatus(b[i][j])) return false;
             }
         }
@@ -301,21 +279,21 @@ public class Adapter {
         int[] width = {1, 3};
         int startX = border;
         int startY = border;
-        for (int i = 1; i < 18; i++) {
+        for (int i = 1; i < boardSize - 1; i++) {
             startX += border;
             startY += border;
-            drawTable.drawLine(startX, border, startX, border * 19, width[0]);
-            drawTable.drawLine(border, startY, border * 19, startY, width[0]);
+            drawTable.drawLine(startX, border, startX, border * boardSize, width[0]);
+            drawTable.drawLine(border, startY, border * boardSize, startY, width[0]);
         }
 
         // 线条宽度默认是0
         // System.out.println(paint.getStrokeWidth());
 
 //        paint.setStrokeWidth(3);
-        drawTable.drawLine(border, border, border, border * 19, width[1]);
-        drawTable.drawLine(border, border, border * 19, border, width[1]);
-        drawTable.drawLine(border, border * 19, border * 19, border * 19, width[1]);
-        drawTable.drawLine(border * 19, border, border * 19, border * 19, width[1]);
+        drawTable.drawLine(border, border, border, border * boardSize, width[1]);
+        drawTable.drawLine(border, border, border * boardSize, border, width[1]);
+        drawTable.drawLine(border, border * boardSize, border * boardSize, border * boardSize, width[1]);
+        drawTable.drawLine(border * boardSize, border, border * boardSize, border * boardSize, width[1]);
 
         int radius = width[1];
         drawTable.drawCircle(border * 4, border * 4, radius, Color.BLACK, true);
@@ -328,8 +306,8 @@ public class Adapter {
         drawTable.drawCircle(border * 16, border * 10, radius, Color.BLACK, true);
         drawTable.drawCircle(border * 16, border * 16, radius, Color.BLACK, true);
 
-        for (int i = 0; i < 19; i++) {
-            for (int j = 0; j < 19; j++) {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 if (null != stones[i][j]) {
                     drawStone(i, j, stones[i][j].color, true);
                 }
@@ -375,6 +353,8 @@ public class Adapter {
         }
         followImportedStones = false; // 当落点是自杀或提劫禁手其实也算没试下，但处理起来很麻烦。最简单的就是把genStone()的返回值改为boolean，但其他地方的返回值不处理会警告。这里简单处理，算是效率复杂度换优雅复杂度了，毕竟虽说没改变棋局，但确实是想要试下的。
         genStone(x, y);
+        x = -1;
+        y = -1;
     }
 
     private boolean doneRandomPlay = true;
@@ -392,10 +372,10 @@ public class Adapter {
         }
 
         Random random = new Random();
-        for (int i = 0; i < 361; i++) {
+        for (int i = 0; i < boardSize * boardSize; i++) {
             int data = availablePoints.remove(random.nextInt(availablePoints.size()));
-            x = data / 19;
-            y = data - data / 19 * 19;
+            x = data / boardSize;
+            y = data - data / boardSize * boardSize;
             drawTable.doRepaint();
             genStone(x, y);
             try {
@@ -411,8 +391,8 @@ public class Adapter {
         // stonesCount[0]是黑子总数，stonesCount[1]是白子总数。
         int[] stonesCount = {0, 0};
         int color;
-        for (int i = 0; i < 19; i++) {
-            for (int j = 0; j < 19; j++) {
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 color = getStoneStatus(stones[i][j]);
                 if (Color.BLACK == color) {
                     stonesCount[0] += 1;
@@ -428,10 +408,10 @@ public class Adapter {
         int[] stonesCount = getStonesCount();
         int preColor, currentColor;
         int emptyCount = 0;
-        for (int i = 0; i < 19; i++) {
+        for (int i = 0; i < boardSize; i++) {
             preColor = Color.GREEN;
             // 这里可以遍历到20之遍历至右边界，不过需要处理好stones的遍历，放到后面处理右边界即可。
-            for (int j = 0; j < 19; j++) {
+            for (int j = 0; j < boardSize; j++) {
                 currentColor = getStoneStatus(stones[i][j]);
                 if (0 == currentColor) {
                     emptyCount += 1;

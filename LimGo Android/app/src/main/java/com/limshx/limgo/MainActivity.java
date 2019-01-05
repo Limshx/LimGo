@@ -1,5 +1,7 @@
 package com.limshx.limgo;
+
 import android.Manifest;
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -14,14 +16,23 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.util.Linkify;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
-import android.widget.Toast;
+import android.widget.ScrollView;
+import android.widget.TextView;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 
 public class MainActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
     private DrawTable drawTable;
@@ -31,17 +42,18 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        context = this;
+        InfoBox.adb = new AlertDialog.Builder(context);
+        InfoBox.inputMethodManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
         // API level 23以上需要申请权限
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && PackageManager.PERMISSION_GRANTED != checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-            requestPermissions(new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+            requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
         } else {
             if (initDirectoryFailed()) {
-                Toast.makeText(this, "Create path failed!", Toast.LENGTH_SHORT).show();
+                drawTable.showMessage("Create path failed!");
             }
         }
-
-        context = this;
 
         drawTable = findViewById(R.id.paint_board);
 
@@ -70,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 //        Window window = getWindow();
 //        window.setStatusBarColor(Color.TRANSPARENT);
 
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             getWindow().setStatusBarColor(Color.TRANSPARENT);
         } else {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
@@ -86,7 +98,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         if (requestCode == 0) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (initDirectoryFailed()) {
-                    Toast.makeText(this, "Create path failed!", Toast.LENGTH_SHORT).show();
+                    drawTable.showMessage("Create path failed!");
                 }
             }
         }
@@ -103,6 +115,66 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
     }
 
+    private String[] demos = {"AlphaGo Zero左右互搏"};
+
+    private boolean download(String fileName) {
+        try {
+            StringBuilder stringBuilder = new StringBuilder();
+            String[] strings = fileName.split(" ");
+            for (int i = 0; i < strings.length; i++) {
+                stringBuilder.append(URLEncoder.encode(strings[i], "UTF-8"));
+                if (i != strings.length - 1) {
+                    stringBuilder.append("%20");
+                }
+            }
+            URL url = new URL("https://raw.githubusercontent.com/Limshx/LimGo/master/Demos/" + stringBuilder.toString());
+            URLConnection urlConnection = url.openConnection();
+            InputStream inputStream = urlConnection.getInputStream();
+            FileOutputStream fileOutputStream = new FileOutputStream(homeDirectory + fileName);
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = inputStream.read(buffer)) != -1) {
+                System.out.println(bytesRead);
+                fileOutputStream.write(buffer, 0, bytesRead);
+            }
+        } catch (IOException e) {
+            // new Handler().post()也会“java.lang.RuntimeException: Can't create handler inside thread that has not called Looper.prepare()”
+            drawTable.post(new Runnable() {
+                @Override
+                public void run() {
+                    drawTable.showMessage("Can not connect to GitHub!");
+                }
+            });
+            return false;
+        }
+        return true;
+    }
+
+    private void downloadDemos() {
+        new InfoBox("There are no projects. Download demos?", "Cancel", "OK", null) {
+            @Override
+            void onNegative() {
+
+            }
+
+            @Override
+            void onPositive() {
+                drawTable.showMessage("Downloading demos...");
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (String demo : demos) {
+                            if (!download(demo)) {
+                                return;
+                            }
+                        }
+                        drawTable.showMessage("Downloaded demos.");
+                    }
+                }).start();
+            }
+        }.showDialog();
+    }
+
     private int selectedItem;
 
     abstract class FileOperation {
@@ -111,29 +183,34 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         void selectFile() {
             File[] files = new File(homeDirectory).listFiles();
 
-            if (files.length == 0) {
-                Toast.makeText(context, "There are no projects.", Toast.LENGTH_SHORT).show();
+            if (0 == files.length) {
+                downloadDemos();
                 return;
             }
 
             final String[] items = new String[files.length];
+            selectedItem = 0;
             for (int i = 0; i < files.length; i++) {
                 items[i] = files[i].getName();
+                if (null != openedFile && openedFile.getName().equals(items[i])) {
+                    selectedItem = i;
+                }
             }
-            selectedItem = 0;
-            InfoBox infoBox = new InfoBox(null, "Cancel", "OK", null, context) {
+            InfoBox infoBox = new InfoBox(null, "Cancel", "OK", null) {
                 @Override
                 void onNegative() {
 
                 }
+
                 @Override
                 void onPositive() {
                     openedFile = new File(homeDirectory + items[selectedItem]);
-                    new InfoBox(  "Import \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null, context) {
+                    new InfoBox("Import \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null) {
                         @Override
                         void onNegative() {
 
                         }
+
                         @Override
                         void onPositive() {
                             operateFile();
@@ -161,19 +238,19 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
 
     private void importFromFile() {
         if (drawTable.adapter.getPlacedStonesFromFile(openedFile)) {
-            Toast.makeText(this, "Imported \"" + openedFile.getName() + "\"", Toast.LENGTH_SHORT).show();
+            drawTable.showMessage("Imported \"" + openedFile.getName() + "\"");
         }
     }
 
     private void exportToFile() {
         if (drawTable.adapter.setPlacedStonesToFile(openedFile)) {
-            Toast.makeText(this, "Exported \"" + openedFile.getName() + "\"", Toast.LENGTH_SHORT).show();
+            drawTable.showMessage("Exported \"" + openedFile.getName() + "\"");
         }
     }
 
     private void deleteFile() {
         if (openedFile.delete()) {
-            Toast.makeText(context, "Deleted \"" + openedFile.getName() + "\"", Toast.LENGTH_SHORT).show();
+            drawTable.showMessage("Deleted \"" + openedFile.getName() + "\"");
         }
     }
 
@@ -198,22 +275,25 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 }.selectFile();
                 break;
             case R.id.Export:
-                InfoBox infoBox = new InfoBox("Input a file name :", "Cancel", "OK", new EditText(context), context) {
+                final EditText editText = new EditText(context);
+                InfoBox infoBox = new InfoBox("Input a file name :", "Cancel", "OK", editText) {
                     @Override
                     void onNegative() {
 
                     }
+
                     @Override
                     void onPositive() {
-                        String fileName = ((EditText) getView()).getText().toString();
+                        String fileName = editText.getText().toString();
                         if (!fileName.equals("")) {
                             openedFile = new File(homeDirectory + fileName);
                             if (openedFile.exists()) {
-                                new InfoBox("File \"" + openedFile.getName() + "\" exists, overwrite it?", "Cancel", "OK", null, context) {
+                                new InfoBox("File \"" + openedFile.getName() + "\" exists, overwrite it?", "Cancel", "OK", null) {
                                     @Override
                                     void onNegative() {
 
                                     }
+
                                     @Override
                                     void onPositive() {
                                         exportToFile();
@@ -223,21 +303,22 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                                 exportToFile();
                             }
                         } else {
-                            Toast.makeText(context, "The name of file can not be empty!", Toast.LENGTH_SHORT).show();
+                            drawTable.showMessage("The name of file can not be empty!");
                         }
                     }
                 };
                 infoBox.showDialog();
                 if (openedFile != null) {
-                    ((EditText) infoBox.getView()).setText(openedFile.getName());
+                    editText.setText(openedFile.getName());
                 }
                 break;
             case R.id.Clear:
-                new InfoBox("Close current project without saving?", "Cancel", "OK", null, context) {
+                new InfoBox("Close current project without saving?", "Cancel", "OK", null) {
                     @Override
                     void onNegative() {
 
                     }
+
                     @Override
                     void onPositive() {
                         clear();
@@ -246,11 +327,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 break;
             case R.id.Delete:
                 if (null != openedFile) {
-                    new InfoBox("Delete \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null, context) {
+                    new InfoBox("Delete \"" + openedFile.getName() + "\" ?", "Cancel", "OK", null) {
                         @Override
                         void onNegative() {
 
                         }
+
                         @Override
                         void onPositive() {
                             deleteFile();
@@ -258,7 +340,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                         }
                     }.showDialog();
                 } else {
-                    Toast.makeText(context, "Please import a project first!", Toast.LENGTH_SHORT).show();
+                    drawTable.showMessage("Please import a project first!");
                 }
                 break;
         }
@@ -273,40 +355,32 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         super.onCreateOptionsMenu(menu);
         MenuItem[] menuItem = new MenuItem[4];
 
-//        menuItem[0] = menu.add(0, 0, 0, "Analyze");
-//        menuItem[0].setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
-//            @Override
-//            public boolean onMenuItemClick(MenuItem item) {
-//                drawTable.adapter.showScore = !drawTable.adapter.showScore;
-//                drawTable.invalidate();
-//                return true;
-//            }
-//        });
-
         menuItem[0] = menu.add(0, 0, 0, "Jump");
         menuItem[0].setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 if (-1 == drawTable.adapter.getImportedStonesNum()) {
-                    Toast.makeText(context, "There are no imported stones!", Toast.LENGTH_SHORT).show();
+                    drawTable.showMessage("There are no imported stones!");
                     return false;
                 }
-
-                new InfoBox("0~" + drawTable.adapter.getImportedStonesNum() + " :", "Cancel", "OK", new EditText(context), context) {
+                final EditText editText = new EditText(context);
+                new InfoBox("0~" + drawTable.adapter.getImportedStonesNum() + " :", "Cancel", "OK", editText) {
                     @Override
                     void onNegative() {
 
                     }
+
                     @Override
                     void onPositive() {
                         try {
-                            drawTable.adapter.jumpToStone(Integer.parseInt(((EditText) getView()).getText().toString()));
+                            drawTable.adapter.jumpToStone(Integer.parseInt(editText.getText().toString()));
                             getAlertDialog().cancel();
                         } catch (NumberFormatException e) {
-                            Toast.makeText(context, "Please input an integer.", Toast.LENGTH_SHORT).show();
+                            drawTable.showMessage("Please input an integer.");
                         }
                     }
                 }.showDialog(false);
+                editText.setText("0");
                 return true;
             }
         });
@@ -331,6 +405,33 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             @Override
             public boolean onMenuItemClick(MenuItem item) {
                 drawTable.adapter.score();
+                return true;
+            }
+        });
+
+        menuItem[3] = menu.add(0, 0, 0, "Help");
+        menuItem[3].setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                TextView textView = new TextView(context);
+                textView.setTextColor(Color.BLACK);
+                textView.setAutoLinkMask(Linkify.ALL);
+                String text = "在棋盘上选中一个空点，然后点主界面右下角的浮动按钮确认落子。\n\n在抽屉菜单中，点Export可以导出当前棋局，点Import可以导入保存的棋局。\n\n导入棋局后点工具菜单的Jump可以跳转到棋局中的某一手棋，这时候如果不选中空点直接点浮动按钮就会按照保存的棋局落子，否则进入试下模式，试下模式中不选择空点直接按浮动按钮则会继续按照保存的棋局落子。\n\nLimGo项目已在GitHub上以GPL-3.0开源，同时提供有安卓版和桌面版。\n\n项目地址：https://github.com/Limshx/LimGo";
+                textView.setText(text);
+                ScrollView scrollView = new ScrollView(context);
+                scrollView.addView(textView);
+                InfoBox infoBox = new InfoBox(null, "Cancel", "OK", scrollView) {
+                    @Override
+                    void onNegative() {
+
+                    }
+
+                    @Override
+                    void onPositive() {
+
+                    }
+                };
+                infoBox.showDialog();
                 return true;
             }
         });

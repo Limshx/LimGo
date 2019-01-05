@@ -1,7 +1,5 @@
 package com.limshx.limgo;
 
-import Kernel.Adapter;
-import Kernel.GraphicsOperations;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -11,6 +9,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
+import com.limshx.limgo.kernel.Adapter;
+import com.limshx.limgo.kernel.GraphicsOperations;
 
 public class DrawTable extends View implements GraphicsOperations {
     private Context context;
@@ -18,11 +18,9 @@ public class DrawTable extends View implements GraphicsOperations {
     private Canvas canvas;
     Adapter adapter;
 
-
     public DrawTable(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.context = context;
-
         paint.setAntiAlias(true);
         paint.setTypeface(Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD));
     }
@@ -32,9 +30,9 @@ public class DrawTable extends View implements GraphicsOperations {
     }
 
     public boolean onTouchEvent(MotionEvent motionEvent) {
+        performClick();
         switch (motionEvent.getAction()) {
             case MotionEvent.ACTION_UP:
-                performClick();
                 break;
             case MotionEvent.ACTION_DOWN:
                 float x = motionEvent.getX();
@@ -51,19 +49,11 @@ public class DrawTable extends View implements GraphicsOperations {
     }
 
     protected void onDraw(Canvas canvas) {
-//        setDrawTable(this);
         this.canvas = canvas;
-
         if (null == adapter) {
             int px = getMeasuredWidth();
-            // int py = getMeasuredHeight();
             adapter = new Adapter(this, px / 20);
         }
-
-//        paint.setColor(Color.WHITE);
-        // canvas.drawRect(0, 0, px, py, paint);
-//        canvas.drawPaint(paint);
-
         adapter.drawBoard();
     }
 
@@ -87,13 +77,6 @@ public class DrawTable extends View implements GraphicsOperations {
         paint.setStyle(fillCircle ? Paint.Style.FILL : Paint.Style.STROKE);
         canvas.drawCircle(v, v1, v2, paint);
     }
-
-//    @Override
-//    public void drawString(String str, float x, float y) {
-//        paint.setColor(Color.BLACK);
-//        paint.setTextSize(32);
-//        canvas.drawText(str, x, y, paint);
-//    }
 
     @Override
     public void showMessage(final String s) {

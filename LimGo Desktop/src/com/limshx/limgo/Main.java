@@ -18,7 +18,7 @@ class Main extends JFrame {
         super(s);
     }
     private static File openedFile;
-    private static String homeDirectory;
+    private static String homeDirectory = System.getProperty("user.dir") + "/";
 
     public static void main(String[] args) {
         Main drawRect = new Main("LimGo");
@@ -27,25 +27,12 @@ class Main extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        homeDirectory = System.getProperty("user.dir") + "/";
-
         // macOS下菜单栏放到全局菜单栏
         if (System.getProperty("os.name").contains("Mac")) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
         }
-
-//        if (System.getProperty("os.name").contains("Win")) {
-//            homeDirectory = System.getProperty("user.dir") + "/";
-//        }
-
-//        Container cont = drawRect.getContentPane();
         DrawTable drawTable = new DrawTable();
         drawRect.add(drawTable);
-//        drawTable.setLayout(null);
-//        JScrollPane scr1 = new JScrollPane(drawTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-//        cont.add(drawTable);
-
         JMenuBar jMenuBar = new JMenuBar();
         JMenu jMenu;
         JMenuItem[] jMenuItems = new JMenuItem[4];
@@ -53,6 +40,7 @@ class Main extends JFrame {
         jMenuItems[0] = new JMenuItem("Import");
         jMenuItems[0].addActionListener(actionEvent -> {
             JFileChooser jFileChooser = new JFileChooser(homeDirectory);
+            jFileChooser.setSelectedFile(openedFile);
             int result = jFileChooser.showOpenDialog(null);
             if (JOptionPane.YES_OPTION != result) {
                 return;
@@ -101,7 +89,6 @@ class Main extends JFrame {
         jMenuItems[0] = new JMenuItem("Jump");
         jMenuItems[1] = new JMenuItem("Random Play");
         jMenuItems[2] = new JMenuItem("Score");
-
         jMenuItems[0].addActionListener(actionEvent -> {
             if (-1 == drawTable.adapter.getImportedStonesNum()) {
                 drawTable.showMessage("There are no imported stones!");
@@ -109,12 +96,10 @@ class Main extends JFrame {
             }
             int importedStonesNum = drawTable.adapter.getImportedStonesNum();
             try {
-
-                int index = Integer.parseInt(JOptionPane.showInputDialog("0 ~ " + importedStonesNum + " :"));
+                int index = Integer.parseInt(JOptionPane.showInputDialog("0 ~ " + importedStonesNum + " :", "0"));
                 drawTable.adapter.jumpToStone(index);
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, "Not an integer!");
-//                e.printStackTrace();
             }
         });
         jMenuItems[1].addActionListener(actionEvent -> new Thread(() -> drawTable.adapter.randomPlay()).start());
@@ -129,15 +114,10 @@ class Main extends JFrame {
         jMenu.add(jMenuItems[0]);
         jMenuBar.add(jMenu);
         drawRect.setJMenuBar(jMenuBar);
-
-//        Insets screenInsets = Toolkit.getDefaultToolkit().getScreenInsets(drawRect.getGraphicsConfiguration());
-
         drawRect.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-//        drawRect.setSize(800, 860);
         int screenWidth = Toolkit.getDefaultToolkit().getScreenSize().width;
         int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
         drawRect.setLocation(screenWidth / 2 - drawTable.windowSize / 2, screenHeight / 2 - drawTable.windowSize / 2);
-
         // JFrame适应JPanel大小
         drawTable.setPreferredSize(new Dimension(drawTable.windowSize, drawTable.windowSize));
         drawRect.setResizable(false);

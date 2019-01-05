@@ -1,7 +1,7 @@
 package com.limshx.limgo;
 
-import Kernel.Adapter;
-import Kernel.GraphicsOperations;
+import com.limshx.limgo.kernel.Adapter;
+import com.limshx.limgo.kernel.GraphicsOperations;
 
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -40,13 +40,6 @@ public class DrawTable extends JPanel implements GraphicsOperations {
             g.drawOval(x - r, y - r, r * 2, r * 2);
         }
     }
-
-//    @Override
-//    public void drawString(String s, float x, float y) {
-//        g.setColor(Color.BLACK);
-//        g.setFont(new Font("圆体", Font.PLAIN, 32));
-//        g.drawString(s, (int) x, (int) y);
-//    }
 
     @Override
     public void showMessage(String s) {
@@ -90,7 +83,6 @@ public class DrawTable extends JPanel implements GraphicsOperations {
         this.g = g; // 总想着getGraphics()云云如何获取g，没想到可以直接在这里获取
         //g.clearRect(0, 0, getWidth(), getHeight()); // 没这句就会有重影
         ((Graphics2D) g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
         if (null == adapter) {
             adapter = new Adapter(this, windowSize / 20);
         }

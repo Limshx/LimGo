@@ -1,4 +1,4 @@
-package Kernel;
+package com.limshx.limgo.kernel;
 
 public interface GraphicsOperations {
     void drawLine(int x1, int y1, int x2, int y2, int width);
