@@ -208,12 +208,12 @@ public class Adapter {
     }
 
     // 根据importedStones和索引i生成局面
-    public void genStone(int i) {
+    private void genStone(int i) {
         String importedStone = importedStones.get(i);
         genStone(importedStone.charAt(0) - baseASCII, importedStone.charAt(1) - baseASCII);
     }
 
-    public void genStone(int x, int y) {
+    private void genStone(int x, int y) {
 //        int resultCode = 0; // 0表示正常，-1是自杀错误，1是提劫禁手
         boolean needToRecoverBoard = false;
         stones[x][y] = new Stone(x, y, color);
@@ -226,7 +226,7 @@ public class Adapter {
         findDeadEnemies(x, y, getOppositeStoneColor(color), false);
         if (!isAlive) {
             stones[x][y] = null;
-            drawTable.showMessage("You cannot kill yourself!");
+            drawTable.showMessage("生命诚可贵，请不要自尽！");
             return;
 //            Toast.makeText(context, "You cannot kill yourself!", Toast.LENGTH_SHORT).show();
 //            resultCode = -1;
@@ -235,7 +235,7 @@ public class Adapter {
         // 劫作为一个或者说一种特例，似乎很难优雅地处理或者说实现，入低层级之拟合之比如必然是先提一子然后考察落的子周围分布之模式识别似乎很不靠谱。最终注意到如果提劫后直接提回来，棋局就会和上一步棋落子前一样，这就就可以作为提劫禁手的判断依据了。
         if (isTheSameBoard(stones, boardForKo[0])) {
             needToRecoverBoard = true;
-            drawTable.showMessage("Forbidden move!");
+            drawTable.showMessage("提劫禁手！");
 //            Toast.makeText(context, "Forbidden move!", Toast.LENGTH_SHORT).show();
 //            resultCode = 1;
         }
@@ -314,25 +314,27 @@ public class Adapter {
             }
         }
 
-        if (x != -1 && null == stones[x][y]) {
+        if (-1 != x && null == stones[x][y]) {
             drawStone(x, y, color, false);
         }
 //        paint.setStrokeWidth(0);
     }
 
     public void click(float x, float y) {
-        if ((border * 0.5 <= x && x < border * 19.5) && (border * 0.5 <= y && y < border * 19.5)) {
+        if ((border * 0.5 <= x && x < border * (boardSize + 0.5)) && (border * 0.5 <= y && y < border * (boardSize + 0.5))) {
             // 加上0.5是让识别点更接近触摸点
             this.x = (int) (x / border + 0.5) - 1;
             this.y = (int) (y / border + 0.5) - 1;
-        } else {
-            this.x = -1;
-            this.y = -1;
+            if (null == stones[this.x][this.y]) {
+                return;
+            }
         }
+        this.x = -1;
+        this.y = -1;
     }
 
     public void placeStone() {
-        if (x == -1) {
+        if (-1 == x) {
             if (currentStoneIndex < getImportedStonesNum()) {
                 currentStoneIndex += 1;
 //                        drawTable.genStone(drawTable.importedStones.get(drawTable.currentStoneIndex).charAt(0) - drawTable.baseASCII, drawTable.importedStones.get(drawTable.currentStoneIndex).charAt(1) - drawTable.baseASCII, DrawTable.color);
@@ -343,12 +345,8 @@ public class Adapter {
                     jumpToStone(currentStoneIndex); // 这样每下一步棋都需要重新下之前的每一步棋，似乎效率略低，虽然实际体验不出来有什么卡顿。不过这也是没办法的，毕竟支持复盘时试下，如何恢复棋局是个问题，暂搁置。
                 }
             } else {
-                drawTable.showMessage("Please select a point first!");
+                drawTable.showMessage("请先选中一个空点！");
             }
-            return;
-        }
-        if (null != stones[x][y]) {
-            drawTable.showMessage("There is already a stone here!");
             return;
         }
         followImportedStones = false; // 当落点是自杀或提劫禁手其实也算没试下，但处理起来很麻烦。最简单的就是把genStone()的返回值改为boolean，但其他地方的返回值不处理会警告。这里简单处理，算是效率复杂度换优雅复杂度了，毕竟虽说没改变棋局，但确实是想要试下的。
@@ -361,7 +359,7 @@ public class Adapter {
 
     public void randomPlay() {
         if (!doneRandomPlay) {
-            drawTable.showMessage("Please wait until random play is done!");
+            drawTable.showMessage("请等待上一个随机局完成！");
             return;
         }
         doneRandomPlay = false;
@@ -435,6 +433,6 @@ public class Adapter {
                 emptyCount = 0;
             }
         }
-        drawTable.showMessage("Black : " + stonesCount[0] + "\nWhite : " + stonesCount[1]);
+        drawTable.showMessage("黑：" + stonesCount[0] + "\n白：" + stonesCount[1]);
     }
 }

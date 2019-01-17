@@ -2,8 +2,8 @@
     <string name="app_name">LimGo</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="Import">Import</string>
-    <string name="Export">Export</string>
-    <string name="Clear">Clear</string>
-    <string name="Delete">Delete</string>
+    <string name="Import">导入</string>
+    <string name="Export">导出</string>
+    <string name="Clear">清空</string>
+    <string name="Delete">删除</string>
 </resources>
